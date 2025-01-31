@@ -86,7 +86,7 @@ class Mario {
 
 class Obstacle {
     constructor() {
-        this.width = 80;
+        this.width = 40; // Узкие препятствия
         this.height = 80;
         this.x = canvas.width + Math.random() * 500;
         this.y = canvas.height - this.height - 20;
@@ -100,6 +100,19 @@ class Obstacle {
         this.x -= speed;
     }
 }
+
+// Отрисовка фона без повторения
+function gameLoop(timestamp) {
+    if (!gameRunning) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Растягиваем фон на весь холст
+    ctx.drawImage(
+        assets.background,
+        0, 0,
+        canvas.width, canvas.height
+    );
 
 class Coin {
     constructor() {
