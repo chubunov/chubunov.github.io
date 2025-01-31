@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mario Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            background: #f0f0f0;
+        }
+        #gameOverMenu {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        #returnToMenuButton {
+            display: block;
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="coinsDisplay">Монеты: 0</div>
+    <div id="gameOverMenu">
+        <h2>Game Over</h2>
+        <button id="returnToMenuButton">Вернуться в меню</button>
+    </div>
+    <audio id="jumpSound" src="jump.mp3"></audio>
+    <audio id="coinSound" src="coin.mp3"></audio>
+    <audio id="backgroundMusic" src="background.mp3" loop></audio>
+    <audio id="gameOverSound" src="game_over.mp3"></audio>
+    <script src="game.js"></script>
+</body>
+</html>
