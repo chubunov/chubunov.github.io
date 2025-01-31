@@ -54,7 +54,7 @@ toggleSound.addEventListener('click', () => {
 
 class Mario {
     constructor() {
-        this.x = 50;
+        this.x = 20;
         this.y = canvas.height - 100;
         this.width = 80;
         this.height = 80;
@@ -80,8 +80,8 @@ class Mario {
         this.velocity += this.gravity;
         this.y += this.velocity;
 
-        if (this.y > canvas.height - this.height - 90) {
-            this.y = canvas.height - this.height - 90;
+        if (this.y > canvas.height - this.height - 85) {
+            this.y = canvas.height - this.height - 85;
             this.velocity = 0;
             this.onGround = true;
         }
@@ -91,9 +91,9 @@ class Mario {
 class Obstacle {
     constructor() {
         this.width = 40;
-        this.height = 80;
+        this.height = 60;
         this.x = canvas.width + Math.random() * 500;
-        this.y = canvas.height - this.height - 20;
+        this.y = canvas.height - this.height - 85;
     }
 
     show() {
@@ -110,7 +110,7 @@ class Coin {
         this.width = 50;
         this.height = 50;
         this.x = canvas.width + Math.random() * 500;
-        this.y = canvas.height - 150 - Math.random() * 50;
+        this.y = canvas.height - 150 - Math.random() * 110;
     }
 
     show() {
