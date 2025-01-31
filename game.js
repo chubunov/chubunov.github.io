@@ -80,8 +80,8 @@ class Mario {
         this.velocity += this.gravity;
         this.y += this.velocity;
 
-        if (this.y > canvas.height - this.height - 80) {
-            this.y = canvas.height - this.height - 80;
+        if (this.y > canvas.height - this.height - 90) {
+            this.y = canvas.height - this.height - 90;
             this.velocity = 0;
             this.onGround = true;
         }
