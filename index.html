@@ -1,119 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>PRiZMARIO GAME</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PRiZMARiO</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
             margin: 0;
+            padding: 0;
+            background: #1a1a1a;
+            touch-action: none;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        
+        #gameCanvas {
+            position: absolute;
+            image-rendering: crisp-edges;
+        }
+        
+        .ui {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            color: white;
+            font-size: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px 15px;
+            border-radius: 10px;
+            z-index: 100;
+        }
+        
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
             display: flex;
             justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #2c3e50;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
-            touch-action: none;
+            gap: 15px;
+            z-index: 100;
         }
-        #gameContainer {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-        }
-        #gameCanvas {
-            image-rendering: crisp-edges;
-            image-rendering: pixelated;
-            width: 100%;
-            height: 100%;
-        }
-        #startButton {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 15px 30px;
-            font-size: 18px;
-            cursor: pointer;
-            z-index: 2;
+        
+        .btn {
+            padding: 12px 20px;
+            font-size: 16px;
             background: #27ae60;
             border: none;
             color: white;
-            border-radius: 5px;
-        }
-        #coins {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            font-size: 20px;
-            color: white;
-            z-index: 2;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 5px;
-        }
-        #gameOverMenu {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.9);
-            color: white;
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            z-index: 3;
-        }
-        #gameOverMessage {
-            font-size: 28px;
-            margin-bottom: 20px;
-        }
-        #returnToMenuButton {
-            padding: 15px 30px;
-            font-size: 18px;
-            cursor: pointer;
-            background: #e74c3c;
-            border: none;
-            color: white;
-            border-radius: 5px;
-        }
-        .sound-control {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 4;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 5px;
+            border-radius: 8px;
+            touch-action: none;
         }
     </style>
 </head>
 <body>
-    <div id="gameContainer">
-        <canvas id="gameCanvas"></canvas>
-        <button id="startButton">Начать игру</button>
-        
-        <div class="sound-control">
-            <button id="toggleSound">🔈 Звук Вкл</button>
-        </div>
-
-        <div id="gameOverMenu">
-            <div id="gameOverMessage">Игра окончена!</div>
-            <div id="finalCoins">Собрано монет: 0</div>
-            <button id="returnToMenuButton">Играть снова</button>
-        </div>
-        
-        <div id="coins">Монеты: 0</div>
-
-        <!-- Звуковые эффекты -->
-        <audio id="jumpSound" src="sounds/jump.mp3"></audio>
-        <audio id="coinSound" src="sounds/coin.mp3"></audio>
-        <audio id="backgroundMusic" src="sounds/background.mp3" loop></audio>
-        <audio id="gameOverSound" src="sounds/game_over.mp3"></audio>
+    <canvas id="gameCanvas"></canvas>
+    <div class="ui">
+        <span id="coins">0</span> 🟡
+        <span id="score">0</span> ⭐
+    </div>
+    <div class="controls">
+        <button class="btn" id="restartBtn">🔄</button>
+        <button class="btn" id="soundBtn">🔊</button>
     </div>
     <script src="game.js"></script>
 </body>
