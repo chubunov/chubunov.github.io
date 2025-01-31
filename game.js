@@ -1,251 +1,287 @@
-// game.js
-const tg = window.Telegram.WebApp;
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+let coins = 0;
+let gameRunning = false;
+let mario;
+let obstacles = [];
+let coinsArray = [];
+let obstacleInterval;
+let coinInterval;
+let lastFrameTime = 0;
+let speed = 5;
+let soundEnabled = true;
+let assetsLoaded = false;
 
-// Game Constants
-const ASPECT_RATIO = 16 / 9;
-const GRAVITY = 0.8;
-const JUMP_FORCE = -18;
-const BASE_SPEED = 5;
+// Элементы управления
+const startButton = document.getElementById('startButton');
+const coinsDisplay = document.getElementById('coins');
+const gameOverMenu = document.getElementById('gameOverMenu');
+const returnToMenuButton = document.getElementById('returnToMenuButton');
+const finalCoins = document.getElementById('finalCoins');
+const toggleSound = document.getElementById('toggleSound');
 
-// Game State
-let gameState = {
-    coins: 0,
-    running: false,
-    sound: true,
-    mario: null,
-    obstacles: [],
-    coinsArray: [],
-    speed: BASE_SPEED
-};
-
-// Assets Loader
-function loadImage(src) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = () => reject(`Failed to load image: ${src}`);
-        img.src = `images/${src}`;
-    });
-}
-
+// Загрузка ресурсов
 const assets = {
-    mario: null,
-    coin: null,
-    obstacle: null,
-    background: null
+    mario: new Image(),
+    coin: new Image(),
+    obstacle: new Image(),
+    background: new Image()
 };
 
-// Init Web App
-tg.expand();
-tg.MainButton.setText('Играть').show();
+assets.mario.src = 'images/mario.png';
+assets.coin.src = 'images/pzmc_coin.png';
+assets.obstacle.src = 'images/obstacle.png';
+assets.background.src = 'images/background.png';
 
-// Game Objects
+// Звуковые эффекты
+const sounds = {
+    jump: new Audio('sounds/jump.mp3'),
+    coin: new Audio('sounds/coin.mp3'),
+    background: new Audio('sounds/background.mp3'),
+    gameOver: new Audio('sounds/game_over.mp3')
+};
+
+// Инициализация звука
+sounds.background.loop = true;
+
+// Управление звуком
+toggleSound.addEventListener('click', () => {
+    soundEnabled = !soundEnabled;
+    toggleSound.textContent = soundEnabled ? '🔈 Звук Вкл' : '🔇 Звук Выкл';
+    if (soundEnabled && gameRunning) sounds.background.play();
+    else sounds.background.pause();
+});
+
 class Mario {
     constructor() {
+        this.x = 50;
+        this.y = canvas.height - 100 - 79; // Поднято на 79px
         this.width = 80;
         this.height = 80;
-        this.x = canvas.width * 0.1;
-        this.y = canvas.height - this.height - 50;
+        this.gravity = 0.8;
+        this.lift = -18;
         this.velocity = 0;
-        this.grounded = true;
+        this.onGround = true;
+    }
+
+    show() {
+        ctx.drawImage(assets.mario, this.x, this.y, this.width, this.height);
+    }
+
+    up() {
+        if (this.onGround) {
+            this.velocity = this.lift;
+            this.onGround = false;
+            playSound(sounds.jump);
+        }
+    }
+
+    update() {
+        this.velocity += this.gravity;
+        this.y += this.velocity;
+
+        // Обновленная позиция "земли"
+        if (this.y > canvas.height - this.height - 20 - 79) {
+            this.y = canvas.height - this.height - 20 - 79;
+            this.velocity = 0;
+            this.onGround = true;
+        }
     }
 }
 
 class Obstacle {
     constructor() {
-        this.width = 60;
+        this.width = 40;
         this.height = 80;
-        this.x = canvas.width + Math.random() * 300;
-        this.y = canvas.height - this.height - 50;
+        this.x = canvas.width + Math.random() * 500;
+        this.y = canvas.height - this.height - 20 - 79; // Поднято на 79px
+    }
+
+    show() {
+        ctx.drawImage(assets.obstacle, this.x, this.y, this.width, this.height);
+    }
+
+    update() {
+        this.x -= speed;
     }
 }
 
 class Coin {
     constructor() {
-        this.width = 40;
-        this.height = 40;
+        this.width = 50;
+        this.height = 50;
         this.x = canvas.width + Math.random() * 500;
-        this.y = canvas.height * 0.4 + Math.random() * 100;
+        this.y = canvas.height - 150 - Math.random() * 50 - 79; // Поднято на 79px
+    }
+
+    show() {
+        ctx.drawImage(assets.coin, this.x, this.y, this.width, this.height);
+    }
+
+    update() {
+        this.x -= speed;
     }
 }
 
-// Core Functions
-function resizeCanvas() {
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
-    
-    if (screenWidth / screenHeight > ASPECT_RATIO) {
-        canvas.width = screenHeight * ASPECT_RATIO;
-        canvas.height = screenHeight;
-    } else {
-        canvas.width = screenWidth;
-        canvas.height = screenWidth / ASPECT_RATIO;
-    }
-    
-    canvas.style.left = `${(window.innerWidth - canvas.width) / 2}px`;
-    canvas.style.top = `${(window.innerHeight - canvas.height) / 2}px`;
-}
-
-function drawBackground() {
-    if (!assets.background) return;
-    
-    const bg = assets.background;
-    const scale = Math.max(canvas.width / bg.width, canvas.height / bg.height);
-    const width = bg.width * scale;
-    const height = bg.height * scale;
-    
-    ctx.drawImage(
-        bg,
-        (canvas.width - width) / 2,
-        (canvas.height - height) / 2,
-        width,
-        height
-    );
-}
-
-function checkCollision(a, b) {
+function checkCollision(obj) {
     return (
-        a.x < b.x + b.width &&
-        a.x + a.width > b.x &&
-        a.y < b.y + b.height &&
-        a.y + a.height > b.y
+        mario.x < obj.x + obj.width &&
+        mario.x + mario.width > obj.x &&
+        mario.y < obj.y + obj.height &&
+        mario.y + mario.height > obj.y
     );
 }
 
-// Game Loop
-function update() {
-    if (!gameState.running) return;
-
-    // Mario physics
-    gameState.mario.velocity += GRAVITY;
-    gameState.mario.y += gameState.mario.velocity;
-    
-    if (gameState.mario.y > canvas.height - gameState.mario.height - 50) {
-        gameState.mario.y = canvas.height - gameState.mario.height - 50;
-        gameState.mario.velocity = 0;
-        gameState.mario.grounded = true;
-    }
+function playSound(sound) {
+    if (!soundEnabled) return;
+    sound.currentTime = 0;
+    sound.play().catch(() => {});
 }
 
-function draw() {
+function gameLoop(timestamp) {
+    if (!gameRunning) return;
+    
+    const deltaTime = timestamp - lastFrameTime;
+    lastFrameTime = timestamp;
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawBackground();
     
-    // Draw Mario
-    if (assets.mario) {
-        ctx.drawImage(
-            assets.mario,
-            gameState.mario.x,
-            gameState.mario.y,
-            gameState.mario.width,
-            gameState.mario.height
-        );
-    }
-    
-    // Draw obstacles
-    gameState.obstacles.forEach(obj => {
-        if (assets.obstacle) {
-            ctx.drawImage(assets.obstacle, obj.x, obj.y, obj.width, obj.height);
+    // Отрисовка фона
+    ctx.drawImage(
+        assets.background,
+        0, 0,
+        canvas.width, canvas.height
+    );
+
+    mario.update();
+    mario.show();
+
+    // Обработка препятствий
+    obstacles.forEach((obstacle, index) => {
+        obstacle.update();
+        obstacle.show();
+
+        if (checkCollision(obstacle)) {
+            gameOver();
+            return;
         }
-        obj.x -= gameState.speed;
-    });
-    
-    // Draw coins
-    gameState.coinsArray.forEach((coin, index) => {
-        if (assets.coin) {
-            ctx.drawImage(assets.coin, coin.x, coin.y, coin.width, coin.height);
-        }
-        coin.x -= gameState.speed;
-        
-        if (checkCollision(gameState.mario, coin)) {
-            gameState.coins++;
-            document.getElementById('coins').textContent = gameState.coins;
-            gameState.coinsArray.splice(index, 1);
+
+        if (obstacle.x + obstacle.width < 0) {
+            obstacles.splice(index, 1);
         }
     });
-    
-    // Collision detection
-    if (gameState.obstacles.some(obj => checkCollision(gameState.mario, obj))) {
-        gameOver();
-    }
-}
 
-function gameLoop() {
-    update();
-    draw();
-    if (gameState.running) requestAnimationFrame(gameLoop);
-}
+    // Обработка монет
+    coinsArray.forEach((coin, index) => {
+        coin.update();
+        coin.show();
 
-// Game Controls
-function jump() {
-    if (gameState.mario?.grounded) {
-        gameState.mario.velocity = JUMP_FORCE;
-        gameState.mario.grounded = false;
-    }
+        if (checkCollision(coin)) {
+            coins++;
+            coinsDisplay.textContent = `Монеты: ${coins}`;
+            coinsArray.splice(index, 1);
+            playSound(sounds.coin);
+        }
+
+        if (coin.x + coin.width < 0) {
+            coinsArray.splice(index, 1);
+        }
+    });
+
+    requestAnimationFrame(gameLoop);
 }
 
 function startGame() {
-    gameState = {
-        coins: 0,
-        running: true,
-        sound: gameState.sound,
-        mario: new Mario(),
-        obstacles: [],
-        coinsArray: [],
-        speed: BASE_SPEED
-    };
+    if (gameRunning || !assetsLoaded) return;
     
-    document.getElementById('coins').textContent = '0';
-    
-    // Spawn objects
-    setInterval(() => {
-        gameState.obstacles.push(new Obstacle());
-        if (Math.random() > 0.5) gameState.coinsArray.push(new Coin());
-    }, 1500);
-    
-    gameLoop();
+    coins = 0;
+    coinsDisplay.textContent = `Монеты: ${coins}`;
+    mario = new Mario();
+    obstacles = [];
+    coinsArray = [];
+    gameRunning = true;
+    speed = 5;
+
+    // Настройка размера canvas
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    obstacleInterval = setInterval(() => {
+        obstacles.push(new Obstacle());
+    }, 1500 + Math.random() * 1000);
+
+    coinInterval = setInterval(() => {
+        coinsArray.push(new Coin());
+    }, 1000 + Math.random() * 800);
+
+    startButton.style.display = 'none';
+    gameOverMenu.style.display = 'none';
+    playSound(sounds.background);
+    requestAnimationFrame(gameLoop);
 }
 
 function gameOver() {
-    gameState.running = false;
-    tg.showAlert(`Game Over! Coins: ${gameState.coins}`);
+    gameRunning = false;
+    clearInterval(obstacleInterval);
+    clearInterval(coinInterval);
+    sounds.background.pause();
+    playSound(sounds.gameOver);
+    finalCoins.textContent = `Монеты: ${coins}`;
+    gameOverMenu.style.display = 'flex';
 }
 
-// Event Listeners
-document.addEventListener('touchstart', jump);
-document.addEventListener('keydown', e => {
-    if (e.code === 'Space') jump();
+function resetGame() {
+    gameOverMenu.style.display = 'none';
+    startButton.style.display = 'block';
+}
+
+// Управление
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') mario?.up();
 });
 
-document.getElementById('restartBtn').addEventListener('click', startGame);
-document.getElementById('soundBtn').addEventListener('click', () => {
-    gameState.sound = !gameState.sound;
-    document.getElementById('soundBtn').textContent = gameState.sound ? '🔊' : '🔇';
+canvas.addEventListener('touchstart', (e) => {
+    if (gameRunning) mario?.up();
+    e.preventDefault();
 });
 
-// Init
+startButton.addEventListener('click', startGame);
+returnToMenuButton.addEventListener('click', resetGame);
+
+// Адаптация размеров
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    if (mario) {
+        mario.y = canvas.height - mario.height - 20 - 79;
+    }
+}
+
 window.addEventListener('resize', resizeCanvas);
-tg.onEvent('viewportChanged', resizeCanvas);
 
-// Load assets
+// Проверка загрузки ресурсов
 Promise.all([
-    loadImage('mario.png'),
-    loadImage('coin.png'),
-    loadImage('obstacle.png'),
-    loadImage('background.png')
-])
-.then(([marioImg, coinImg, obstacleImg, bgImg]) => {
-    assets.mario = marioImg;
-    assets.coin = coinImg;
-    assets.obstacle = obstacleImg;
-    assets.background = bgImg;
-    
-    resizeCanvas();
-    startGame();
-})
-.catch(error => {
-    console.error(error);
-    tg.showAlert(error);
+    new Promise(resolve => {
+        assets.mario.onload = resolve;
+        assets.mario.onerror = () => console.error('Ошибка загрузки Mario');
+    }),
+    new Promise(resolve => {
+        assets.coin.onload = resolve;
+        assets.coin.onerror = () => console.error('Ошибка загрузки Coin');
+    }),
+    new Promise(resolve => {
+        assets.obstacle.onload = resolve;
+        assets.obstacle.onerror = () => console.error('Ошибка загрузки Obstacle');
+    }),
+    new Promise(resolve => {
+        assets.background.onload = resolve;
+        assets.background.onerror = () => console.error('Ошибка загрузки Background');
+    })
+]).then(() => {
+    assetsLoaded = true;
+    startButton.disabled = false;
+    console.log('Все ресурсы загружены');
 });
+
+// Первоначальная настройка
+resizeCanvas();
