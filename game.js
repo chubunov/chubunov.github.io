@@ -55,7 +55,7 @@ toggleSound.addEventListener('click', () => {
 class Mario {
     constructor() {
         this.x = 50;
-        this.y = canvas.height - 179;
+        this.y = canvas.height - 100 - 79; // Поднято на 79px
         this.width = 80;
         this.height = 80;
         this.gravity = 0.8;
@@ -80,8 +80,9 @@ class Mario {
         this.velocity += this.gravity;
         this.y += this.velocity;
 
-        if (this.y > canvas.height - this.height - 99) {
-            this.y = canvas.height - this.height - 99;
+        // Обновленная позиция "земли"
+        if (this.y > canvas.height - this.height - 20 - 79) {
+            this.y = canvas.height - this.height - 20 - 79;
             this.velocity = 0;
             this.onGround = true;
         }
@@ -93,7 +94,7 @@ class Obstacle {
         this.width = 40;
         this.height = 80;
         this.x = canvas.width + Math.random() * 500;
-        this.y = canvas.height - this.height - 99;
+        this.y = canvas.height - this.height - 20 - 79; // Поднято на 79px
     }
 
     show() {
@@ -110,7 +111,7 @@ class Coin {
         this.width = 50;
         this.height = 50;
         this.x = canvas.width + Math.random() * 500;
-        this.y = canvas.height - 150 - Math.random() * 129;
+        this.y = canvas.height - 150 - Math.random() * 50 - 79; // Поднято на 79px
     }
 
     show() {
@@ -252,7 +253,7 @@ function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     if (mario) {
-        mario.y = canvas.height - mario.height - 20;
+        mario.y = canvas.height - mario.height - 20 - 79;
     }
 }
 
