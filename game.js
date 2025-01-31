@@ -55,7 +55,7 @@ toggleSound.addEventListener('click', () => {
 class Mario {
     constructor() {
         this.x = 50;
-        this.y = canvas.height - 100;
+        this.y = canvas.height - 150;
         this.width = 80;
         this.height = 80;
         this.gravity = 0.8;
