@@ -141,10 +141,11 @@ function gameLoop(timestamp) {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Отрисовка фона с повторением
-    const pattern = ctx.createPattern(assets.background, 'repeat');
-    ctx.fillStyle = pattern;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Отрисовка фона
+    ctx.drawImage(
+    assets.background,
+    0, 0, // Начальные координаты
+    canvas.width, canvas.height // Растянуть на весь холст );
 
     mario.update();
     mario.show();
