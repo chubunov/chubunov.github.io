@@ -1,3 +1,4 @@
+// game.js
 const tg = window.Telegram.WebApp;
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -11,7 +12,6 @@ const BASE_SPEED = 5;
 // Game State
 let gameState = {
     coins: 0,
-    score: 0,
     running: false,
     sound: true,
     mario: null,
@@ -20,18 +20,26 @@ let gameState = {
     speed: BASE_SPEED
 };
 
-// Assets
+// Assets Loader
+function loadImage(src) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(`Failed to load image: ${src}`);
+        img.src = `images/${src}`;
+    });
+}
+
 const assets = {
-    mario: loadImage('mario.png'),
-    coin: loadImage('coin.png'),
-    obstacle: loadImage('obstacle.png'),
-    background: loadImage('background.png')
+    mario: null,
+    coin: null,
+    obstacle: null,
+    background: null
 };
 
 // Init Web App
 tg.expand();
-tg.enableClosingConfirmation();
-tg.BackButton.hide();
+tg.MainButton.setText('Играть').show();
 
 // Game Objects
 class Mario {
@@ -81,6 +89,8 @@ function resizeCanvas() {
 }
 
 function drawBackground() {
+    if (!assets.background) return;
+    
     const bg = assets.background;
     const scale = Math.max(canvas.width / bg.width, canvas.height / bg.height);
     const width = bg.width * scale;
@@ -124,22 +134,29 @@ function draw() {
     drawBackground();
     
     // Draw Mario
-    ctx.drawImage(
-        assets.mario,
-        gameState.mario.x,
-        gameState.mario.y,
-        gameState.mario.width,
-        gameState.mario.height
-    );
+    if (assets.mario) {
+        ctx.drawImage(
+            assets.mario,
+            gameState.mario.x,
+            gameState.mario.y,
+            gameState.mario.width,
+            gameState.mario.height
+        );
+    }
     
-    // Draw objects
+    // Draw obstacles
     gameState.obstacles.forEach(obj => {
-        ctx.drawImage(assets.obstacle, obj.x, obj.y, obj.width, obj.height);
+        if (assets.obstacle) {
+            ctx.drawImage(assets.obstacle, obj.x, obj.y, obj.width, obj.height);
+        }
         obj.x -= gameState.speed;
     });
     
+    // Draw coins
     gameState.coinsArray.forEach((coin, index) => {
-        ctx.drawImage(assets.coin, coin.x, coin.y, coin.width, coin.height);
+        if (assets.coin) {
+            ctx.drawImage(assets.coin, coin.x, coin.y, coin.width, coin.height);
+        }
         coin.x -= gameState.speed;
         
         if (checkCollision(gameState.mario, coin)) {
@@ -163,7 +180,7 @@ function gameLoop() {
 
 // Game Controls
 function jump() {
-    if (gameState.mario.grounded) {
+    if (gameState.mario?.grounded) {
         gameState.mario.velocity = JUMP_FORCE;
         gameState.mario.grounded = false;
     }
@@ -172,7 +189,6 @@ function jump() {
 function startGame() {
     gameState = {
         coins: 0,
-        score: 0,
         running: true,
         sound: gameState.sound,
         mario: new Mario(),
@@ -213,19 +229,23 @@ document.getElementById('soundBtn').addEventListener('click', () => {
 window.addEventListener('resize', resizeCanvas);
 tg.onEvent('viewportChanged', resizeCanvas);
 
-Promise.all(Object.values(assets).map(img => 
-    new Promise(resolve => {
-        img.onload = resolve;
-        img.onerror = resolve;
-    })
-)).then(() => {
+// Load assets
+Promise.all([
+    loadImage('mario.png'),
+    loadImage('coin.png'),
+    loadImage('obstacle.png'),
+    loadImage('background.png')
+])
+.then(([marioImg, coinImg, obstacleImg, bgImg]) => {
+    assets.mario = marioImg;
+    assets.coin = coinImg;
+    assets.obstacle = obstacleImg;
+    assets.background = bgImg;
+    
     resizeCanvas();
     startGame();
+})
+.catch(error => {
+    console.error(error);
+    tg.showAlert(error);
 });
-
-// Helper function
-function loadImage(src) {
-    const img = new Image();
-    img.src = src;
-    return img;
-}
