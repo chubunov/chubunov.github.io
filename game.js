@@ -110,7 +110,7 @@ class Coin {
         this.width = 50;
         this.height = 50;
         this.x = canvas.width + Math.random() * 500;
-        this.y = canvas.height - 150 - Math.random() * 110;
+        this.y = canvas.height - 215 - Math.random() * 110;
     }
 
     show() {
