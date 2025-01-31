@@ -1,4 +1,3 @@
-// game.js
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 let coins = 0;
@@ -10,38 +9,53 @@ let obstacleInterval;
 let coinInterval;
 let lastFrameTime = 0;
 let speed = 5;
+let soundEnabled = true;
+
+// Элементы управления
 const startButton = document.getElementById('startButton');
 const coinsDisplay = document.getElementById('coins');
 const gameOverMenu = document.getElementById('gameOverMenu');
 const returnToMenuButton = document.getElementById('returnToMenuButton');
+const finalCoins = document.getElementById('finalCoins');
+const toggleSound = document.getElementById('toggleSound');
 
 // Загрузка изображений
 const assets = {
-    mario: 'mario.png',
-    coin: 'pzmc_coin.png',
-    obstacle: 'obstacle.png',
-    background: 'background.png'
+    mario: new Image(),
+    coin: new Image(),
+    obstacle: new Image(),
+    background: new Image()
 };
 
-// Предзагрузка изображений
-function loadImage(src) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-        img.src = src;
-    });
-}
+assets.mario.src = 'images/mario.png';
+assets.coin.src = 'images/pzmc_coin.png';
+assets.obstacle.src = 'images/obstacle.png';
+assets.background.src = 'images/background.png';
 
-// Класс Марио
+// Звуковые элементы
+const sounds = {
+    jump: document.getElementById('jumpSound'),
+    coin: document.getElementById('coinSound'),
+    background: document.getElementById('backgroundMusic'),
+    gameOver: document.getElementById('gameOverSound')
+};
+
+// Управление звуком
+toggleSound.addEventListener('click', () => {
+    soundEnabled = !soundEnabled;
+    toggleSound.textContent = soundEnabled ? '🔈 Звук Вкл' : '🔇 Звук Выкл';
+    if (soundEnabled && gameRunning) sounds.background.play();
+    else sounds.background.pause();
+});
+
 class Mario {
     constructor() {
         this.x = 50;
-        this.y = canvas.height - 50 - 55;
-        this.width = 50;
-        this.height = 50;
+        this.y = canvas.height - 100;
+        this.width = 80;
+        this.height = 80;
         this.gravity = 0.8;
-        this.lift = -15;
+        this.lift = -18;
         this.velocity = 0;
         this.onGround = true;
     }
@@ -54,6 +68,7 @@ class Mario {
         if (this.onGround) {
             this.velocity = this.lift;
             this.onGround = false;
+            playSound(sounds.jump);
         }
     }
 
@@ -61,21 +76,20 @@ class Mario {
         this.velocity += this.gravity;
         this.y += this.velocity;
 
-        if (this.y > canvas.height - this.height - 55) {
-            this.y = canvas.height - this.height - 55;
+        if (this.y > canvas.height - this.height - 20) {
+            this.y = canvas.height - this.height - 20;
             this.velocity = 0;
             this.onGround = true;
         }
     }
 }
 
-// Класс препятствия
 class Obstacle {
     constructor() {
-        this.width = 40;
-        this.height = 55;
+        this.width = 80;
+        this.height = 80;
         this.x = canvas.width + Math.random() * 500;
-        this.y = canvas.height - 55 - 55;
+        this.y = canvas.height - this.height - 20;
     }
 
     show() {
@@ -87,13 +101,12 @@ class Obstacle {
     }
 }
 
-// Класс монеты
 class Coin {
     constructor() {
-        this.width = 30;
-        this.height = 30;
+        this.width = 50;
+        this.height = 50;
         this.x = canvas.width + Math.random() * 500;
-        this.y = canvas.height - 100 - 55 - Math.random() * 30;
+        this.y = canvas.height - 150 - Math.random() * 50;
     }
 
     show() {
@@ -105,7 +118,6 @@ class Coin {
     }
 }
 
-// Проверка коллизий
 function checkCollision(obj) {
     return (
         mario.x < obj.x + obj.width &&
@@ -115,7 +127,12 @@ function checkCollision(obj) {
     );
 }
 
-// Игровой цикл
+function playSound(sound) {
+    if (!soundEnabled) return;
+    sound.currentTime = 0;
+    sound.play().catch(() => {});
+}
+
 function gameLoop(timestamp) {
     if (!gameRunning) return;
     
@@ -123,7 +140,11 @@ function gameLoop(timestamp) {
     lastFrameTime = timestamp;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(assets.background, 0, 0, canvas.width, canvas.height);
+    
+    // Отрисовка фона с повторением
+    const pattern = ctx.createPattern(assets.background, 'repeat');
+    ctx.fillStyle = pattern;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     mario.update();
     mario.show();
@@ -150,8 +171,9 @@ function gameLoop(timestamp) {
 
         if (checkCollision(coin)) {
             coins++;
-            coinsDisplay.textContent = `Coins: ${coins}`;
+            coinsDisplay.textContent = `Монеты: ${coins}`;
             coinsArray.splice(index, 1);
+            playSound(sounds.coin);
         }
 
         if (coin.x + coin.width < 0) {
@@ -162,27 +184,20 @@ function gameLoop(timestamp) {
     requestAnimationFrame(gameLoop);
 }
 
-// Запуск игры
-async function startGame() {
-    await Promise.all([
-        loadImage(assets.mario),
-        loadImage(assets.coin),
-        loadImage(assets.obstacle),
-        loadImage(assets.background)
-    ]);
-
-    assets.mario = await loadImage(assets.mario);
-    assets.coin = await loadImage(assets.coin);
-    assets.obstacle = await loadImage(assets.obstacle);
-    assets.background = await loadImage(assets.background);
-
+function startGame() {
+    if (gameRunning) return;
+    
     coins = 0;
-    coinsDisplay.textContent = `Coins: ${coins}`;
+    coinsDisplay.textContent = `Монеты: ${coins}`;
     mario = new Mario();
     obstacles = [];
     coinsArray = [];
     gameRunning = true;
     speed = 5;
+
+    // Настройка размера canvas
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
     obstacleInterval = setInterval(() => {
         obstacles.push(new Obstacle());
@@ -190,21 +205,24 @@ async function startGame() {
 
     coinInterval = setInterval(() => {
         coinsArray.push(new Coin());
-    }, 1500 + Math.random() * 1000);
+    }, 1000 + Math.random() * 800);
 
     startButton.style.display = 'none';
+    gameOverMenu.style.display = 'none';
+    playSound(sounds.background);
     requestAnimationFrame(gameLoop);
 }
 
-// Завершение игры
 function gameOver() {
     gameRunning = false;
     clearInterval(obstacleInterval);
     clearInterval(coinInterval);
+    sounds.background.pause();
+    playSound(sounds.gameOver);
+    finalCoins.textContent = `Монеты: ${coins}`;
     gameOverMenu.style.display = 'flex';
 }
 
-// Сброс игры
 function resetGame() {
     gameOverMenu.style.display = 'none';
     startButton.style.display = 'block';
@@ -212,11 +230,12 @@ function resetGame() {
 
 // Управление
 document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space') mario.up();
+    if (e.code === 'Space') mario?.up();
 });
 
 canvas.addEventListener('touchstart', (e) => {
-    if (gameRunning) mario.up();
+    if (gameRunning) mario?.up();
+    e.preventDefault();
 });
 
 startButton.addEventListener('click', startGame);
@@ -224,9 +243,22 @@ returnToMenuButton.addEventListener('click', resetGame);
 
 // Адаптация размеров
 function resizeCanvas() {
-    canvas.width = window.innerWidth * 0.95;
-    canvas.height = window.innerHeight * 0.7;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    if (mario) {
+        mario.y = canvas.height - mario.height - 20;
+    }
 }
 
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
+
+// Инициализация
+Promise.all([
+    new Promise(resolve => assets.mario.onload = resolve),
+    new Promise(resolve => assets.coin.onload = resolve),
+    new Promise(resolve => assets.obstacle.onload = resolve),
+    new Promise(resolve => assets.background.onload = resolve)
+]).then(() => {
+    startButton.disabled = false;
+});
