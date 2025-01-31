@@ -1,126 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>PRiZMARIO GAME</title>
+    <title>PZM Runner</title>
     <style>
-        body {
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f0f0;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
+        body { margin: 0; overflow: hidden; }
+        canvas { background: #f0f0f0; }
+        #gameOverMenu { 
+            display: none; 
+            position: fixed; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            background: white; 
+            padding: 20px; 
+            text-align: center; 
         }
-        #gameContainer {
-            position: relative;
-            width: 100%;
-            max-width: 800px;
-            height: 400px;
-            overflow: hidden;
-        }
-        #gameCanvas {
-            border: 1px solid black;
-            display: block;
-            width: 100%;
-            height: 100%;
-            object-fit: contain; /* Сохранение пропорций */
-        }
-        #paymentMenu {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-        #paymentMenu input, #paymentMenu button {
-            margin: 10px;
-            padding: 10px 20px;
-            font-size: 16px;
-        }
-        #startButton {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        #testModeButton {
-            margin-top: 10px;
-        }
-        #coins {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            font-size: 18px;
-            color: white;
-        }
-        #gameOverMenu {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-        #gameOverMessage {
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-        #returnToMenuButton {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        @media (max-width: 600px) {
-            #gameContainer {
-                height: 300px;
-            }
-            #startButton {
-                bottom: 10px;
-            }
-        }
+        button { padding: 10px 20px; font-size: 18px; }
     </style>
 </head>
 <body>
-    <div id="gameContainer">
-        <canvas id="gameCanvas"></canvas>
-        <div id="paymentMenu">
-            <h2>PRiZMARIO GAME</h2>
-            <input type="text" id="playerAddress" placeholder="Введите адрес кошелька">
-            <button id="checkPaymentButton">Проверить оплату</button>
-            <div id="paymentStatus"></div>
-            <button id="startButton" style="display: none;">Играть</button>
-            <button id="testModeButton" disabled>Тестовый режим</button>
-        </div>
-        <div id="gameOverMenu">
-            <div id="gameOverMessage">Игра окончена</div>
-            <button id="returnToMenuButton">Вернуться в меню</button>
-        </div>
-        <div id="coins">Монеты: 0</div>
-        <audio id="jumpSound" src="jump.mp3"></audio>
-        <audio id="coinSound" src="coin.mp3"></audio>
-        <audio id="backgroundMusic" src="background.mp3" loop></audio>
-        <audio id="gameOverSound" src="game_over.mp3"></audio>
+    <canvas id="gameCanvas"></canvas>
+    <button id="startButton">Start Game</button>
+    
+    <div id="gameOverMenu">
+        <h2>Game Over!</h2>
+        <p>Coins: <span id="coins">0</span></p>
+        <button id="returnToMenuButton">Restart</button>
     </div>
+
     <script src="game.js"></script>
 </body>
 </html>
