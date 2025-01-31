@@ -93,7 +93,7 @@ class Obstacle {
         this.width = 40;
         this.height = 80;
         this.x = canvas.width + Math.random() * 500;
-        this.y = canvas.height - this.height - 20;
+        this.y = canvas.height - this.height - 99;
     }
 
     show() {
@@ -110,7 +110,7 @@ class Coin {
         this.width = 50;
         this.height = 50;
         this.x = canvas.width + Math.random() * 500;
-        this.y = canvas.height - 150 - Math.random() * 50;
+        this.y = canvas.height - 150 - Math.random() * 129;
     }
 
     show() {
