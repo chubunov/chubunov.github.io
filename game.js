@@ -149,8 +149,7 @@ function gameLoop(timestamp) {
     ctx.drawImage(
         assets.background,
         0, 0,
-        canvas.width, canvas.height
-    );
+        canvas.width, canvas.height);
 
     mario.update();
     mario.show();
