@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -10,59 +9,167 @@
         body {
             margin: 0;
             padding: 0;
-            background: #1a1a1a;
-            touch-action: none;
-            overflow: hidden;
+            background: #2c3e50;
+            touch-action: manipulation;
             font-family: Arial, sans-serif;
         }
-        
-        #gameCanvas {
-            position: absolute;
-            image-rendering: crisp-edges;
-        }
-        
-        .ui {
+
+        #gameContainer {
             position: fixed;
-            top: 15px;
-            left: 15px;
-            color: white;
-            font-size: 20px;
-            background: rgba(0,0,0,0.7);
-            padding: 10px 15px;
-            border-radius: 10px;
-            z-index: 100;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
         }
-        
+
+        #gameCanvas {
+            image-rendering: crisp-edges;
+            width: 100%;
+            height: 100%;
+        }
+
         .controls {
             position: fixed;
             bottom: 20px;
             width: 100%;
             display: flex;
             justify-content: center;
-            gap: 15px;
+            gap: 20px;
             z-index: 100;
         }
-        
+
         .btn {
-            padding: 12px 20px;
-            font-size: 16px;
+            padding: 15px 25px;
+            font-size: 18px;
             background: #27ae60;
             border: none;
             color: white;
-            border-radius: 8px;
+            border-radius: 10px;
             touch-action: none;
+        }
+
+        #coins {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            color: white;
+            font-size: 20px;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 15px;
+            border-radius: 10px;
+            z-index: 100;
         }
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas"></canvas>
-    <div class="ui">
-        <span id="coins">0</span> 🟡
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div id="coins">💰: 0</div>
+        <div class="controls">
+            <button class="btn" id="restartBtn">🔄 Рестарт</button>
+            <button class="btn" id="soundBtn">🔊 Звук</button>
+        </div>
     </div>
-    <div class="controls">
-        <button class="btn" id="restartBtn">🔄</button>
-        <button class="btn" id="soundBtn">🔊</button>
-    </div>
-    <script src="game.js"></script>
+    <script>
+        // Инициализация Telegram Web App
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.enableClosingConfirmation();
+        
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Основные настройки игры
+        let gameState = {
+            coins: 0,
+            running: false,
+            mario: null,
+            obstacles: [],
+            coinsArray: [],
+            speed: 5,
+            sound: true
+        };
+
+        // Загрузка ресурсов
+        const assets = {
+            mario: new Image(),
+            coin: new Image(),
+            obstacle: new Image(),
+            background: new Image()
+        };
+
+        assets.mario.src = 'mario.png';
+        assets.coin.src = 'coin.png';
+        assets.obstacle.src = 'obstacle.png';
+        assets.background.src = 'background.png';
+
+        // Классы объектов
+        class Mario {
+            constructor() {
+                this.x = 50;
+                this.y = canvas.height - 150;
+                this.width = 80;
+                this.height = 80;
+                this.gravity = 0.8;
+                this.velocity = 0;
+                this.jumpForce = -18;
+                this.grounded = true;
+            }
+        }
+
+        // Остальные классы и логика игры...
+
+        // Адаптация управления
+        document.addEventListener('touchstart', (e) => {
+            if(gameState.running) gameState.mario.jump();
+            e.preventDefault();
+        }, {passive: false});
+
+        document.getElementById('restartBtn').addEventListener('click', initGame);
+        document.getElementById('soundBtn').addEventListener('click', toggleSound);
+
+        // Инициализация игры
+        function initGame() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            // Сброс состояния игры
+            gameState = {
+                coins: 0,
+                running: true,
+                mario: new Mario(),
+                obstacles: [],
+                coinsArray: [],
+                speed: 5,
+                sound: true
+            };
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Основной игровой цикл
+        function gameLoop() {
+            if(!gameState.running) return;
+            
+            // Логика обновления и отрисовки...
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Запуск игры при полной загрузке
+        window.onload = () => {
+            Promise.all(Object.values(assets).map(img => 
+                new Promise(resolve => {
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                })
+            )).then(initGame);
+        };
+
+        // Интеграция с Telegram
+        tg.onEvent('viewportChanged', () => {
+            canvas.width = tg.viewportWidth;
+            canvas.height = tg.viewportHeight;
+        });
+    </script>
 </body>
 </html>
