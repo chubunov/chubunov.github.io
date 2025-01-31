@@ -10,6 +10,7 @@ let coinInterval;
 let lastFrameTime = 0;
 let speed = 5;
 let soundEnabled = true;
+let assetsLoaded = false;
 
 // Элементы управления
 const startButton = document.getElementById('startButton');
@@ -19,7 +20,7 @@ const returnToMenuButton = document.getElementById('returnToMenuButton');
 const finalCoins = document.getElementById('finalCoins');
 const toggleSound = document.getElementById('toggleSound');
 
-// Загрузка изображений
+// Загрузка ресурсов
 const assets = {
     mario: new Image(),
     coin: new Image(),
@@ -32,13 +33,16 @@ assets.coin.src = 'images/pzmc_coin.png';
 assets.obstacle.src = 'images/obstacle.png';
 assets.background.src = 'images/background.png';
 
-// Звуковые элементы
+// Звуковые эффекты
 const sounds = {
-    jump: document.getElementById('jumpSound'),
-    coin: document.getElementById('coinSound'),
-    background: document.getElementById('backgroundMusic'),
-    gameOver: document.getElementById('gameOverSound')
+    jump: new Audio('sounds/jump.mp3'),
+    coin: new Audio('sounds/coin.mp3'),
+    background: new Audio('sounds/background.mp3'),
+    gameOver: new Audio('sounds/game_over.mp3')
 };
+
+// Инициализация звука
+sounds.background.loop = true;
 
 // Управление звуком
 toggleSound.addEventListener('click', () => {
@@ -86,7 +90,7 @@ class Mario {
 
 class Obstacle {
     constructor() {
-        this.width = 40; // Узкие препятствия
+        this.width = 40;
         this.height = 80;
         this.x = canvas.width + Math.random() * 500;
         this.y = canvas.height - this.height - 20;
@@ -100,19 +104,6 @@ class Obstacle {
         this.x -= speed;
     }
 }
-
-// Отрисовка фона без повторения
-function gameLoop(timestamp) {
-    if (!gameRunning) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Растягиваем фон на весь холст
-    ctx.drawImage(
-        assets.background,
-        0, 0,
-        canvas.width, canvas.height
-    );
 
 class Coin {
     constructor() {
@@ -156,9 +147,10 @@ function gameLoop(timestamp) {
     
     // Отрисовка фона
     ctx.drawImage(
-    assets.background,
-    0, 0, // Начальные координаты
-    canvas.width, canvas.height // Растянуть на весь холст );
+        assets.background,
+        0, 0,
+        canvas.width, canvas.height
+    );
 
     mario.update();
     mario.show();
@@ -199,7 +191,7 @@ function gameLoop(timestamp) {
 }
 
 function startGame() {
-    if (gameRunning) return;
+    if (gameRunning || !assetsLoaded) return;
     
     coins = 0;
     coinsDisplay.textContent = `Монеты: ${coins}`;
@@ -265,14 +257,30 @@ function resizeCanvas() {
 }
 
 window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
 
-// Инициализация
+// Проверка загрузки ресурсов
 Promise.all([
-    new Promise(resolve => assets.mario.onload = resolve),
-    new Promise(resolve => assets.coin.onload = resolve),
-    new Promise(resolve => assets.obstacle.onload = resolve),
-    new Promise(resolve => assets.background.onload = resolve)
+    new Promise(resolve => {
+        assets.mario.onload = resolve;
+        assets.mario.onerror = () => console.error('Ошибка загрузки Mario');
+    }),
+    new Promise(resolve => {
+        assets.coin.onload = resolve;
+        assets.coin.onerror = () => console.error('Ошибка загрузки Coin');
+    }),
+    new Promise(resolve => {
+        assets.obstacle.onload = resolve;
+        assets.obstacle.onerror = () => console.error('Ошибка загрузки Obstacle');
+    }),
+    new Promise(resolve => {
+        assets.background.onload = resolve;
+        assets.background.onerror = () => console.error('Ошибка загрузки Background');
+    })
 ]).then(() => {
+    assetsLoaded = true;
     startButton.disabled = false;
+    console.log('Все ресурсы загружены');
 });
+
+// Первоначальная настройка
+resizeCanvas();
